@@ -103,3 +103,6 @@
 	path = waterbox/opera/opera-libretro
 	url = https://github.com/TASEmulators/opera-libretro.git
 	branch = wbx
+[submodule "encore/encore-personal"]
+	path = encore/encore-personal
+	url = https://github.com/benstephens56/encore-personal.git
