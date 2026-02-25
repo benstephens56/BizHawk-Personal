@@ -29,6 +29,10 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			"allow_plugin_loader" => _syncSettings.AllowPluginLoader,
 			"want_determinism" => DeterministicEmulation,
 			"filter_mode" => _settings.FilterMode,
+			"dump_textures" => _settings.DumpTextures,
+			"custom_textures" => _settings.UseCustomTextures,
+			"preload_textures" => _settings.PreloadCustomTextures,
+			"async_custom_loading" => _settings.AsyncCustomTextureLoading,
 			"swap_screen" => _settings.SwapScreen,
 			"upright_screen" => _settings.UprightScreen,
 			"custom_layout" => _settings.UseCustomLayout,
@@ -188,6 +192,26 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			[Description("Whether to enable linear filtering or not")]
 			[DefaultValue(true)]
 			public bool FilterMode { get; set; }
+
+			[DisplayName("Dump Textures")]
+			[Description("Dump decoded textures to disk for texture-pack authoring.")]
+			[DefaultValue(false)]
+			public bool DumpTextures { get; set; }
+
+			[DisplayName("Use Custom Textures")]
+			[Description("Load replacement textures from the custom texture directory.")]
+			[DefaultValue(false)]
+			public bool UseCustomTextures { get; set; }
+
+			[DisplayName("Preload Custom Textures")]
+			[Description("Preload all custom textures at boot. Can reduce runtime stutter at the cost of startup time and RAM.")]
+			[DefaultValue(false)]
+			public bool PreloadCustomTextures { get; set; }
+
+			[DisplayName("Async Custom Texture Loading")]
+			[Description("Load custom textures in background threads. Ignored if custom textures are disabled.")]
+			[DefaultValue(true)]
+			public bool AsyncCustomTextureLoading { get; set; }
 
 			[DisplayName("Background Color")]
 			[Description("The clear color for the renderer. What shows up on the sides of the bottom screen.")]
