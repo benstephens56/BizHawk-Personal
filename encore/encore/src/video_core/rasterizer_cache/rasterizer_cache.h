@@ -1021,6 +1021,8 @@ void RasterizerCache<T>::UploadSurface(Surface& surface, SurfaceInterval interva
     const SurfaceParams load_info = surface.FromInterval(interval);
     ASSERT(load_info.addr >= surface.addr && load_info.end <= surface.end);
 
+    dump_textures = Settings::values.dump_textures.GetValue();
+
     const auto staging = runtime.FindStaging(
         load_info.width * load_info.height * surface.GetInternalBytesPerPixel(), true);
 
