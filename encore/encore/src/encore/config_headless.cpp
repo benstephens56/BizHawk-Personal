@@ -216,11 +216,11 @@ void Config_Headless::LoadSyncSettings() {
 
 void Config_Headless::LoadNonSyncSettings() {
     // Utility
-    // Read these explicitly to avoid any ambiguity with switchable-setting template dispatch.
-    Settings::values.dump_textures = callbacks.GetBoolean("dump_textures");
-    Settings::values.custom_textures = callbacks.GetBoolean("custom_textures");
-    Settings::values.preload_textures = callbacks.GetBoolean("preload_textures");
-    Settings::values.async_custom_loading = callbacks.GetBoolean("async_custom_loading");
+    // Read these explicitly via integer callback as well, avoiding bool ABI ambiguity.
+    Settings::values.dump_textures = callbacks.GetInteger("dump_textures") != 0;
+    Settings::values.custom_textures = callbacks.GetInteger("custom_textures") != 0;
+    Settings::values.preload_textures = callbacks.GetInteger("preload_textures") != 0;
+    Settings::values.async_custom_loading = callbacks.GetInteger("async_custom_loading") != 0;
 
     if (Settings::values.dump_textures.GetValue()) {
         FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::DumpDir));

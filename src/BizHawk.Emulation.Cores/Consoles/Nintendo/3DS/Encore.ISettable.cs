@@ -43,6 +43,10 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 
 		private ulong GetIntegerSettingCallback(string label) => label switch
 		{
+			"dump_textures" => _settings.DumpTextures ? 1UL : 0UL,
+			"custom_textures" => _settings.UseCustomTextures ? 1UL : 0UL,
+			"preload_textures" => _settings.PreloadCustomTextures ? 1UL : 0UL,
+			"async_custom_loading" => _settings.AsyncCustomTextureLoading ? 1UL : 0UL,
 			"cpu_clock_percentage" => (ulong)_syncSettings.CpuClockPercentage,
 			"graphics_api" => (ulong)EncoreSyncSettings.EGraphicsApi.OpenGL,/*_supportsOpenGL43 ? (ulong)_syncSettings.GraphicsApi : (ulong)EncoreSyncSettings.EGraphicsApi.Software,*/
 			"region_value" => (ulong)_syncSettings.RegionValue,
