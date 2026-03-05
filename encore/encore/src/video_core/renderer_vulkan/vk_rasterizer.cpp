@@ -137,6 +137,7 @@ void RasterizerVulkan::TickFrame() {
 
 void RasterizerVulkan::LoadDiskResources(const std::atomic_bool& stop_loading,
                                          const VideoCore::DiskResourceLoadCallback& callback) {
+    res_cache.LoadDiskResources(stop_loading, callback);
     pipeline_cache.LoadDiskCache();
 }
 
