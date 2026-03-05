@@ -1035,8 +1035,7 @@ void RasterizerCache<T>::UploadSurface(Surface& surface, SurfaceInterval interva
     DecodeTexture(load_info, load_info.addr, load_info.end, upload_data, staging.mapped,
                   runtime.NeedsConversion(surface.pixel_format));
 
-    const bool should_dump = False(surface.flags & SurfaceFlagBits::Custom) &&
-                             False(surface.flags & SurfaceFlagBits::RenderTarget);
+    const bool should_dump = False(surface.flags & SurfaceFlagBits::Custom);
     if (dump_textures && should_dump) {
         const u64 hash = ComputeHash(load_info, upload_data);
         const u32 level = surface.LevelOf(load_info.addr);
