@@ -165,6 +165,6 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		public abstract IntPtr Encore_GetPagePointer(IntPtr context, uint addr);
 
 		[BizImport(cc)]
-		public abstract void Encore_GetTouchScreenLayout(IntPtr context, out int x, out int y, out int width, out int height, out [MarshalAs(UnmanagedType.I1)] bool rotated, out [MarshalAs(UnmanagedType.I1)] bool enabled);
+		public abstract void Encore_GetTouchScreenLayout(IntPtr context, out int x, out int y, out int width, out int height, [MarshalAs(UnmanagedType.I1)] out bool rotated, [MarshalAs(UnmanagedType.I1)] out bool enabled);
 	}
 }
