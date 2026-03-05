@@ -215,6 +215,12 @@ void Config_Headless::LoadSyncSettings() {
 }
 
 void Config_Headless::LoadNonSyncSettings() {
+    // Utility
+    ReadSetting(Settings::values.dump_textures);
+    ReadSetting(Settings::values.custom_textures);
+    ReadSetting(Settings::values.preload_textures);
+    ReadSetting(Settings::values.async_custom_loading);
+
     // Renderer
     ReadSetting(Settings::values.resolution_factor);
     ReadSetting(Settings::values.texture_filter);
