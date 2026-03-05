@@ -215,6 +215,20 @@ void Config_Headless::LoadSyncSettings() {
 }
 
 void Config_Headless::LoadNonSyncSettings() {
+    // Utility
+    // Read these explicitly via integer callback as well, avoiding bool ABI ambiguity.
+    Settings::values.dump_textures = callbacks.GetInteger("dump_textures") != 0;
+    Settings::values.custom_textures = callbacks.GetInteger("custom_textures") != 0;
+    Settings::values.preload_textures = callbacks.GetInteger("preload_textures") != 0;
+    Settings::values.async_custom_loading = callbacks.GetInteger("async_custom_loading") != 0;
+
+    if (Settings::values.dump_textures.GetValue()) {
+        FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::DumpDir));
+    }
+    if (Settings::values.custom_textures.GetValue()) {
+        FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::LoadDir));
+    }
+
     // Renderer
     ReadSetting(Settings::values.resolution_factor);
     ReadSetting(Settings::values.texture_filter);
