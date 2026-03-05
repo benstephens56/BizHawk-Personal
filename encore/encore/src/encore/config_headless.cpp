@@ -216,10 +216,18 @@ void Config_Headless::LoadSyncSettings() {
 
 void Config_Headless::LoadNonSyncSettings() {
     // Utility
-    ReadSetting(Settings::values.dump_textures);
-    ReadSetting(Settings::values.custom_textures);
-    ReadSetting(Settings::values.preload_textures);
-    ReadSetting(Settings::values.async_custom_loading);
+    // Read these explicitly to avoid any ambiguity with switchable-setting template dispatch.
+    Settings::values.dump_textures = callbacks.GetBoolean("dump_textures");
+    Settings::values.custom_textures = callbacks.GetBoolean("custom_textures");
+    Settings::values.preload_textures = callbacks.GetBoolean("preload_textures");
+    Settings::values.async_custom_loading = callbacks.GetBoolean("async_custom_loading");
+
+    if (Settings::values.dump_textures.GetValue()) {
+        FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::DumpDir));
+    }
+    if (Settings::values.custom_textures.GetValue()) {
+        FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::LoadDir));
+    }
 
     // Renderer
     ReadSetting(Settings::values.resolution_factor);
