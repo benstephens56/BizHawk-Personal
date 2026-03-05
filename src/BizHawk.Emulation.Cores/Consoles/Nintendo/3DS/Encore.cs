@@ -75,7 +75,10 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			_syncSettings = lp.SyncSettings ?? new();
 
 			DeterministicEmulation = lp.DeterministicEmulationRequested;
-			_userPath = lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: DeterministicEmulation && _syncSettings.TempUserFolder) + Path.DirectorySeparatorChar;
+			var useTempUserPath = DeterministicEmulation && _syncSettings.TempUserFolder
+				&& !_settings.DumpTextures
+				&& !_settings.UseCustomTextures;
+			_userPath = lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: useTempUserPath) + Path.DirectorySeparatorChar;
 			_userPath = _userPath.Replace('\\', '/'); // Encore doesn't like backslashes in the user folder, for whatever reason
 
 			// copy firmware over to the user folder
