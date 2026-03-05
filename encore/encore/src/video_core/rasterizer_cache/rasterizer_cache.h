@@ -85,6 +85,28 @@ RasterizerCache<T>::~RasterizerCache() {
 }
 
 template <class T>
+void RasterizerCache<T>::LoadDiskResources(const std::atomic_bool& stop_loading,
+                                           const DiskResourceLoadCallback& callback) {
+    if (!Settings::values.custom_textures.GetValue()) {
+        return;
+    }
+
+    custom_tex_manager.FindCustomTextures();
+
+    if (!Settings::values.preload_textures.GetValue()) {
+        return;
+    }
+
+    if (callback) {
+        callback(LoadCallbackStage::Prepare, 0, 1);
+    }
+    custom_tex_manager.PreloadTextures(stop_loading, callback);
+    if (callback) {
+        callback(LoadCallbackStage::Complete, 1, 1);
+    }
+}
+
+template <class T>
 void RasterizerCache<T>::TickFrame() {
     custom_tex_manager.TickFrame();
     RunGarbageCollector();
@@ -99,6 +121,8 @@ void RasterizerCache<T>::TickFrame() {
     const bool resolution_scale_changed = resolution_scale_factor != scale_factor;
     const bool use_custom_texture_changed =
         Settings::values.custom_textures.GetValue() != use_custom_textures;
+
+    dump_textures = Settings::values.dump_textures.GetValue();
 
     if (resolution_scale_changed || use_custom_texture_changed) {
         resolution_scale_factor = scale_factor;
