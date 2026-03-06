@@ -184,6 +184,11 @@ void CustomTexManager::PrepareDumping(u64 title_id) {
     // Write template config file
     const std::string dump_path =
         fmt::format("{}textures/{:016X}/", GetUserPath(FileUtil::UserPath::DumpDir), title_id);
+    if (!FileUtil::CreateFullPath(dump_path)) {
+        LOG_ERROR(Render, "Unable to create {}", dump_path);
+        return;
+    }
+
     const std::string pack_config = dump_path + "pack.json";
     if (FileUtil::Exists(pack_config)) {
         return;
@@ -200,6 +205,11 @@ void CustomTexManager::PrepareDumping(u64 title_id) {
     options["use_new_hash"] = true;
 
     FileUtil::IOFile file{pack_config, "w"};
+    if (!file.IsOpen()) {
+        LOG_ERROR(Render, "Unable to open {} for writing", pack_config);
+        return;
+    }
+
     const std::string output = json.dump(4);
     file.WriteString(output);
 }
