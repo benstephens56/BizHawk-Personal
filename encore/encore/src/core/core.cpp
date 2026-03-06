@@ -336,10 +336,10 @@ System::ResultStatus System::Load(Frontend::EmuWindow& emu_window, const std::st
 
     perf_stats = std::make_unique<PerfStats>(title_id);
 
-    if (Settings::values.dump_textures) {
+    if (Settings::values.dump_textures.GetValue()) {
         custom_tex_manager->PrepareDumping(title_id);
     }
-    if (Settings::values.custom_textures) {
+    if (Settings::values.custom_textures.GetValue()) {
         custom_tex_manager->FindCustomTextures();
     }
 
