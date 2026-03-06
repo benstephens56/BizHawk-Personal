@@ -198,6 +198,10 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 				throw new Exception($"{Encoding.UTF8.GetString(errorMessage).TrimEnd('\0')}");
 			}
 
+			var titleId = _core.Encore_GetTitleId(_context);
+			Directory.CreateDirectory(Path.Combine(_userPath, "dump", "textures", $"{titleId:X16}"));
+			Directory.CreateDirectory(Path.Combine(_userPath, "load", "textures", $"{titleId:X16}"));
+
 			InitMemoryDomains();
 			// for some reason, if a savestate is created on frame 0, Encore will crash if another savestate is made after loading that state
 			// advance one frame to avoid that issue

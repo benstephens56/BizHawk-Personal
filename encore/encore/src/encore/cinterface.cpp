@@ -112,3 +112,8 @@ ENCORE_EXPORT void Encore_GetTouchScreenLayout(EncoreContext* context, u32* x, u
     *rotated = std::get<1>(touch_screen_layout);
     *enabled = std::get<2>(touch_screen_layout);
 }
+
+
+ENCORE_EXPORT u64 Encore_GetTitleId(EncoreContext* context) {
+    return context->GetTitleId();
+}
