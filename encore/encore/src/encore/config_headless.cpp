@@ -6,6 +6,7 @@
 #include <locale>
 
 #include "common/file_util.h"
+#include "common/logging/log.h"
 #include "common/settings.h"
 #include "core/hle/service/cfg/cfg.h"
 #include "core/hle/service/ptm/ptm.h"
@@ -177,6 +178,17 @@ void Config_Headless::LoadSyncSettings() {
                         sizeof(user_directory_path_buffer));
     FileUtil::ResetUserPath();
     FileUtil::SetUserPath(user_directory_path_buffer);
+
+    // Always materialize base load/dump roots after user path is set.
+    // This helps verify pathing and avoids delayed creation failures.
+    const auto dump_root = FileUtil::GetUserPath(FileUtil::UserPath::DumpDir);
+    const auto load_root = FileUtil::GetUserPath(FileUtil::UserPath::LoadDir);
+    if (!FileUtil::CreateFullPath(dump_root)) {
+        LOG_ERROR(Common_Filesystem, "Unable to create {}", dump_root);
+    }
+    if (!FileUtil::CreateFullPath(load_root)) {
+        LOG_ERROR(Common_Filesystem, "Unable to create {}", load_root);
+    }
 
     // System
     ReadSetting(Settings::values.is_new_3ds);

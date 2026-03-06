@@ -88,6 +88,14 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			{
 				Directory.CreateDirectory(sysDataDir);
 			}
+			if (_settings.DumpTextures)
+			{
+				Directory.CreateDirectory(Path.Combine(_userPath, "dump"));
+			}
+			if (_settings.UseCustomTextures)
+			{
+				Directory.CreateDirectory(Path.Combine(_userPath, "load"));
+			}
 
 			var aesKeys = lp.Comm.CoreFileProvider.GetFirmware(new("3DS", "aes_keys"));
 			if (aesKeys is not null)
