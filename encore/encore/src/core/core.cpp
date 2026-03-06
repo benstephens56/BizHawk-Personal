@@ -5,10 +5,12 @@
 #include <stdexcept>
 #include <utility>
 #include <boost/serialization/array.hpp>
+#include <fmt/format.h>
 #include "audio_core/dsp_interface.h"
 #include "audio_core/hle/hle.h"
 #include "audio_core/lle/lle.h"
 #include "common/arch.h"
+#include "common/file_util.h"
 #include "common/logging/log.h"
 #include "common/settings.h"
 #include "core/arm/arm_interface.h"
@@ -331,15 +333,22 @@ System::ResultStatus System::Load(Frontend::EmuWindow& emu_window, const std::st
                   static_cast<u32>(load_result));
     }
 
+    const auto title_dump_path = fmt::format("{}textures/{:016X}/",
+                                             FileUtil::GetUserPath(FileUtil::UserPath::DumpDir),
+                                             title_id);
+    if (!FileUtil::CreateFullPath(title_dump_path)) {
+        LOG_ERROR(Core, "Unable to create {}", title_dump_path);
+    }
+
     cheat_engine.LoadCheatFile(title_id);
     cheat_engine.Connect();
 
     perf_stats = std::make_unique<PerfStats>(title_id);
 
-    if (Settings::values.dump_textures) {
+    if (Settings::values.dump_textures.GetValue()) {
         custom_tex_manager->PrepareDumping(title_id);
     }
-    if (Settings::values.custom_textures) {
+    if (Settings::values.custom_textures.GetValue()) {
         custom_tex_manager->FindCustomTextures();
     }
 

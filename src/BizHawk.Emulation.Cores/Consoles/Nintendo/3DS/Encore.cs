@@ -75,7 +75,10 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			_syncSettings = lp.SyncSettings ?? new();
 
 			DeterministicEmulation = lp.DeterministicEmulationRequested;
-			_userPath = lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: DeterministicEmulation && _syncSettings.TempUserFolder) + Path.DirectorySeparatorChar;
+			var useTempUserPath = DeterministicEmulation && _syncSettings.TempUserFolder
+				&& !_settings.DumpTextures
+				&& !_settings.UseCustomTextures;
+			_userPath = lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: useTempUserPath) + Path.DirectorySeparatorChar;
 			_userPath = _userPath.Replace('\\', '/'); // Encore doesn't like backslashes in the user folder, for whatever reason
 
 			// copy firmware over to the user folder
@@ -84,6 +87,14 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			if (!Directory.Exists(sysDataDir))
 			{
 				Directory.CreateDirectory(sysDataDir);
+			}
+			if (_settings.DumpTextures)
+			{
+				Directory.CreateDirectory(Path.Combine(_userPath, "dump"));
+			}
+			if (_settings.UseCustomTextures)
+			{
+				Directory.CreateDirectory(Path.Combine(_userPath, "load"));
 			}
 
 			var aesKeys = lp.Comm.CoreFileProvider.GetFirmware(new("3DS", "aes_keys"));
@@ -186,6 +197,10 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 				Dispose();
 				throw new Exception($"{Encoding.UTF8.GetString(errorMessage).TrimEnd('\0')}");
 			}
+
+			var titleId = _core.Encore_GetTitleId(_context);
+			Directory.CreateDirectory(Path.Combine(_userPath, "dump", "textures", $"{titleId:X16}"));
+			Directory.CreateDirectory(Path.Combine(_userPath, "load", "textures", $"{titleId:X16}"));
 
 			InitMemoryDomains();
 			// for some reason, if a savestate is created on frame 0, Encore will crash if another savestate is made after loading that state
