@@ -29,10 +29,6 @@ constexpr std::size_t MAX_UPLOADS_PER_TICK = 8;
 
 using namespace Common::Literals;
 
-bool IsPow2(u32 value) {
-    return value != 0 && (value & (value - 1)) == 0;
-}
-
 CustomFileFormat MakeFileFormat(std::string_view ext) {
     if (ext == "png") {
         return CustomFileFormat::PNG;
@@ -278,11 +274,9 @@ void CustomTexManager::DumpTexture(const SurfaceParams& params, u32 level, std::
         return;
     }
 
-    // Make sure the texture size is a power of 2.
-    // If not, the surface is probably a framebuffer
-    if (!IsPow2(width) || !IsPow2(height)) {
-        LOG_WARNING(Render, "Not dumping {:016X} because size isn't a power of 2 ({}x{})",
-                    data_hash, width, height);
+    if (width == 0 || height == 0) {
+        LOG_WARNING(Render, "Not dumping {:016X} due to invalid dimensions ({}x{})", data_hash,
+                    width, height);
         return;
     }
 
