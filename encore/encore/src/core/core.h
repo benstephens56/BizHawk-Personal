@@ -306,6 +306,11 @@ public:
         return *app_loader;
     }
 
+    [[nodiscard]] u64 GetTitleId() const {
+        return title_id;
+    }
+
+
     /// Frontend Applets
 
     void RegisterMiiSelector(std::shared_ptr<Frontend::MiiSelector> mii_selector);
