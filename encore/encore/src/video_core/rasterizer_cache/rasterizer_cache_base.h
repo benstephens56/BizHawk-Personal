@@ -14,6 +14,7 @@
 #include <tsl/robin_map.h>
 
 #include "video_core/rasterizer_cache/framebuffer_base.h"
+#include "video_core/rasterizer_interface.h"
 #include "video_core/rasterizer_cache/sampler_params.h"
 #include "video_core/rasterizer_cache/surface_params.h"
 #include "video_core/rasterizer_cache/texture_cube.h"
@@ -82,6 +83,10 @@ public:
 
     /// Notify the cache that a new frame has been queued
     void TickFrame();
+
+    /// Load custom texture resources from disk
+    void LoadDiskResources(const std::atomic_bool& stop_loading,
+                           const DiskResourceLoadCallback& callback);
 
     /// Perform hardware accelerated texture copy according to the provided configuration
     bool AccelerateTextureCopy(const Pica::DisplayTransferConfig& config);
