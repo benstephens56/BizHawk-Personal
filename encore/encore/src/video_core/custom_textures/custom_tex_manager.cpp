@@ -29,10 +29,6 @@ constexpr std::size_t MAX_UPLOADS_PER_TICK = 8;
 
 using namespace Common::Literals;
 
-bool IsPow2(u32 value) {
-    return value != 0 && (value & (value - 1)) == 0;
-}
-
 CustomFileFormat MakeFileFormat(std::string_view ext) {
     if (ext == "png") {
         return CustomFileFormat::PNG;
@@ -184,6 +180,11 @@ void CustomTexManager::PrepareDumping(u64 title_id) {
     // Write template config file
     const std::string dump_path =
         fmt::format("{}textures/{:016X}/", GetUserPath(FileUtil::UserPath::DumpDir), title_id);
+    if (!FileUtil::CreateFullPath(dump_path)) {
+        LOG_ERROR(Render, "Unable to create {}", dump_path);
+        return;
+    }
+
     const std::string pack_config = dump_path + "pack.json";
     if (FileUtil::Exists(pack_config)) {
         return;
@@ -200,6 +201,11 @@ void CustomTexManager::PrepareDumping(u64 title_id) {
     options["use_new_hash"] = true;
 
     FileUtil::IOFile file{pack_config, "w"};
+    if (!file.IsOpen()) {
+        LOG_ERROR(Render, "Unable to open {} for writing", pack_config);
+        return;
+    }
+
     const std::string output = json.dump(4);
     file.WriteString(output);
 }
@@ -239,14 +245,24 @@ void CustomTexManager::PreloadTextures(const std::atomic_bool& stop_run,
 
 void CustomTexManager::DumpTexture(const SurfaceParams& params, u32 level, std::span<u8> data,
                                    u64 data_hash) {
-    const u64 program_id = system.Kernel().GetCurrentProcess()->codeset->program_id;
+    u64 title_id = system.GetTitleId();
+    if (title_id == 0) {
+        if (const auto process = system.Kernel().GetCurrentProcess(); process && process->codeset) {
+            title_id = process->codeset->program_id;
+        }
+    }
+    if (title_id == 0) {
+        LOG_WARNING(Render, "Unable to resolve title id for texture dump");
+        return;
+    }
+
     const u32 data_size = static_cast<u32>(data.size());
     const u32 width = params.width;
     const u32 height = params.height;
     const PixelFormat format = params.pixel_format;
 
     std::string dump_path = fmt::format(
-        "{}textures/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::DumpDir), program_id);
+        "{}textures/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::DumpDir), title_id);
     if (!FileUtil::CreateFullPath(dump_path)) {
         LOG_ERROR(Render, "Unable to create {}", dump_path);
         return;
@@ -258,11 +274,9 @@ void CustomTexManager::DumpTexture(const SurfaceParams& params, u32 level, std::
         return;
     }
 
-    // Make sure the texture size is a power of 2.
-    // If not, the surface is probably a framebuffer
-    if (!IsPow2(width) || !IsPow2(height)) {
-        LOG_WARNING(Render, "Not dumping {:016X} because size isn't a power of 2 ({}x{})",
-                    data_hash, width, height);
+    if (width == 0 || height == 0) {
+        LOG_WARNING(Render, "Not dumping {:016X} due to invalid dimensions ({}x{})", data_hash,
+                    width, height);
         return;
     }
 
