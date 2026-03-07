@@ -280,3 +280,8 @@ std::tuple<Common::Rectangle<u32>, bool, bool> EncoreContext::GetTouchScreenLayo
     // orientation
     return std::make_tuple(layout.bottom_screen, !layout.is_rotated, layout.bottom_screen_enabled);
 }
+
+
+u64 EncoreContext::GetTitleId() const {
+    return system.GetTitleId();
+}

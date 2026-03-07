@@ -9,6 +9,7 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		private const CallingConvention cc = CallingConvention.Cdecl;
 
 		[UnmanagedFunctionPointer(cc)]
+		[return: MarshalAs(UnmanagedType.I1)]
 		public delegate bool GetBooleanSettingCallback(string label);
 
 		[UnmanagedFunctionPointer(cc)]
@@ -79,12 +80,14 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		}
 
 		[UnmanagedFunctionPointer(cc)]
+		[return: MarshalAs(UnmanagedType.I1)]
 		public delegate bool GetButtonCallback(Buttons button);
 
 		[UnmanagedFunctionPointer(cc)]
 		public delegate void GetAxisCallback(AnalogSticks stick, out float x, out float y);
 
 		[UnmanagedFunctionPointer(cc)]
+		[return: MarshalAs(UnmanagedType.I1)]
 		public delegate bool GetTouchCallback(out float x, out float y);
 
 		[UnmanagedFunctionPointer(cc)]
@@ -109,12 +112,15 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		public abstract void Encore_DestroyContext(IntPtr context);
 
 		[BizImport(cc)]
+		[return: MarshalAs(UnmanagedType.I1)]
 		public abstract bool Encore_InstallCIA(IntPtr context, string ciaPath, byte[] messageBuffer, int messageBufferLen);
 
 		[BizImport(cc)]
+		[return: MarshalAs(UnmanagedType.I1)]
 		public abstract bool Encore_LoadROM(IntPtr context, string romPath, byte[] errorMessageBuffer, int errorMessageBufferLen);
 
 		[BizImport(cc)]
+		[return: MarshalAs(UnmanagedType.I1)]
 		public abstract bool Encore_RunFrame(IntPtr context);
 
 		[BizImport(cc)]
@@ -159,6 +165,7 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		public abstract IntPtr Encore_GetPagePointer(IntPtr context, uint addr);
 
 		[BizImport(cc)]
-		public abstract void Encore_GetTouchScreenLayout(IntPtr context, out int x, out int y, out int width, out int height, out bool rotated, out bool enabled);
+		public abstract void Encore_GetTouchScreenLayout(IntPtr context, out int x, out int y, out int width, out int height, [MarshalAs(UnmanagedType.I1)] out bool rotated, [MarshalAs(UnmanagedType.I1)] out bool enabled);
+
 	}
 }
