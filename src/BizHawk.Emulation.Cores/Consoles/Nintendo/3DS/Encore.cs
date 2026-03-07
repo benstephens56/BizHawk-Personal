@@ -47,6 +47,7 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		private readonly LibEncore.InputCallbackInterface _inputCallbackInterface;
 		private readonly IntPtr _context;
 		private readonly EncoreVideoProvider _encoreVideoProvider;
+		private readonly string _persistentUserPath;
 
 		public Rectangle TouchScreenRectangle { get; private set; }
 		public bool TouchScreenRotated { get; private set; }
@@ -80,6 +81,7 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 				&& !_settings.UseCustomTextures;
 			_userPath = lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: useTempUserPath) + Path.DirectorySeparatorChar;
 			_userPath = _userPath.Replace('\\', '/'); // Encore doesn't like backslashes in the user folder, for whatever reason
+			_persistentUserPath = (lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: false) + Path.DirectorySeparatorChar).Replace('\\', '/');
 
 			// copy firmware over to the user folder
 			// this must be done before Encore_CreateContext is called!
@@ -96,6 +98,8 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			{
 				Directory.CreateDirectory(Path.Combine(_userPath, "load"));
 			}
+			Directory.CreateDirectory(Path.Combine(_persistentUserPath, "dump"));
+			Directory.CreateDirectory(Path.Combine(_persistentUserPath, "load"));
 
 			var aesKeys = lp.Comm.CoreFileProvider.GetFirmware(new("3DS", "aes_keys"));
 			if (aesKeys is not null)
@@ -198,6 +202,7 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 				throw new Exception($"{Encoding.UTF8.GetString(errorMessage).TrimEnd('\0')}");
 			}
 
+			EnsureTextureDirsVisibleInPersistentPath();
 			InitMemoryDomains();
 			// for some reason, if a savestate is created on frame 0, Encore will crash if another savestate is made after loading that state
 			// advance one frame to avoid that issue
@@ -220,6 +225,37 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		}
 
 		public string RomDetails { get; }
+
+		private void EnsureTextureDirsVisibleInPersistentPath()
+		{
+			var persistentDumpTextures = Path.Combine(_persistentUserPath, "dump", "textures");
+			var persistentLoadTextures = Path.Combine(_persistentUserPath, "load", "textures");
+			Directory.CreateDirectory(persistentDumpTextures);
+			Directory.CreateDirectory(persistentLoadTextures);
+
+			if (_persistentUserPath == _userPath)
+			{
+				return;
+			}
+
+			var activeDumpTextures = Path.Combine(_userPath, "dump", "textures");
+			if (Directory.Exists(activeDumpTextures))
+			{
+				foreach (var dir in Directory.GetDirectories(activeDumpTextures))
+				{
+					Directory.CreateDirectory(Path.Combine(persistentDumpTextures, Path.GetFileName(dir)));
+				}
+			}
+
+			var activeLoadTextures = Path.Combine(_userPath, "load", "textures");
+			if (Directory.Exists(activeLoadTextures))
+			{
+				foreach (var dir in Directory.GetDirectories(activeLoadTextures))
+				{
+					Directory.CreateDirectory(Path.Combine(persistentLoadTextures, Path.GetFileName(dir)));
+				}
+			}
+		}
 
 		private IntPtr RequestGLContextCallback()
 		{
