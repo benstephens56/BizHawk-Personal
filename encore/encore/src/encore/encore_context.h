@@ -40,6 +40,8 @@ public:
 
     std::tuple<Common::Rectangle<u32>, bool, bool> GetTouchScreenLayout() const;
 
+    u64 GetTitleId() const;
+
 private:
     Core::System& system;
     std::unique_ptr<EmuWindow_Headless> window;
