@@ -169,6 +169,7 @@ void RasterizerOpenGL::TickFrame() {
 
 void RasterizerOpenGL::LoadDiskResources(const std::atomic_bool& stop_loading,
                                          const VideoCore::DiskResourceLoadCallback& callback) {
+    res_cache.LoadDiskResources(stop_loading, callback);
     shader_manager.LoadDiskCache(stop_loading, callback);
 }
 

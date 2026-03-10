@@ -47,6 +47,7 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		private readonly LibEncore.InputCallbackInterface _inputCallbackInterface;
 		private readonly IntPtr _context;
 		private readonly EncoreVideoProvider _encoreVideoProvider;
+		private readonly string _persistentUserPath;
 
 		public Rectangle TouchScreenRectangle { get; private set; }
 		public bool TouchScreenRotated { get; private set; }
@@ -75,8 +76,12 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			_syncSettings = lp.SyncSettings ?? new();
 
 			DeterministicEmulation = lp.DeterministicEmulationRequested;
-			_userPath = lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: DeterministicEmulation && _syncSettings.TempUserFolder) + Path.DirectorySeparatorChar;
+			var useTempUserPath = DeterministicEmulation && _syncSettings.TempUserFolder
+				&& !_settings.DumpTextures
+				&& !_settings.UseCustomTextures;
+			_userPath = lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: useTempUserPath) + Path.DirectorySeparatorChar;
 			_userPath = _userPath.Replace('\\', '/'); // Encore doesn't like backslashes in the user folder, for whatever reason
+			_persistentUserPath = (lp.Comm.CoreFileProvider.GetUserPath(SystemId, temp: false) + Path.DirectorySeparatorChar).Replace('\\', '/');
 
 			// copy firmware over to the user folder
 			// this must be done before Encore_CreateContext is called!
@@ -85,6 +90,16 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 			{
 				Directory.CreateDirectory(sysDataDir);
 			}
+			if (_settings.DumpTextures)
+			{
+				Directory.CreateDirectory(Path.Combine(_userPath, "dump"));
+			}
+			if (_settings.UseCustomTextures)
+			{
+				Directory.CreateDirectory(Path.Combine(_userPath, "load"));
+			}
+			Directory.CreateDirectory(Path.Combine(_persistentUserPath, "dump"));
+			Directory.CreateDirectory(Path.Combine(_persistentUserPath, "load"));
 
 			var aesKeys = lp.Comm.CoreFileProvider.GetFirmware(new("3DS", "aes_keys"));
 			if (aesKeys is not null)
@@ -187,6 +202,8 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 				throw new Exception($"{Encoding.UTF8.GetString(errorMessage).TrimEnd('\0')}");
 			}
 
+			var titleIdHex = TryGetTitleIdHexFromRom(romPath);
+			EnsureTextureDirsVisibleInPersistentPath(titleIdHex);
 			InitMemoryDomains();
 			// for some reason, if a savestate is created on frame 0, Encore will crash if another savestate is made after loading that state
 			// advance one frame to avoid that issue
@@ -209,6 +226,110 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.N3DS
 		}
 
 		public string RomDetails { get; }
+
+		private void EnsureTextureDirsVisibleInPersistentPath(string titleIdHex)
+		{
+			var persistentDumpTextures = Path.Combine(_persistentUserPath, "dump", "textures");
+			var persistentLoadTextures = Path.Combine(_persistentUserPath, "load", "textures");
+			Directory.CreateDirectory(persistentDumpTextures);
+			Directory.CreateDirectory(persistentLoadTextures);
+
+			if (!string.IsNullOrEmpty(titleIdHex))
+			{
+				Directory.CreateDirectory(Path.Combine(_userPath, "dump", "textures", titleIdHex));
+				Directory.CreateDirectory(Path.Combine(_userPath, "load", "textures", titleIdHex));
+				Directory.CreateDirectory(Path.Combine(_persistentUserPath, "dump", "textures", titleIdHex));
+				Directory.CreateDirectory(Path.Combine(_persistentUserPath, "load", "textures", titleIdHex));
+			}
+
+			if (_persistentUserPath == _userPath)
+			{
+				return;
+			}
+
+			var activeDumpTextures = Path.Combine(_userPath, "dump", "textures");
+			if (Directory.Exists(activeDumpTextures))
+			{
+				foreach (var dir in Directory.GetDirectories(activeDumpTextures))
+				{
+					Directory.CreateDirectory(Path.Combine(persistentDumpTextures, Path.GetFileName(dir)));
+				}
+			}
+
+			var activeLoadTextures = Path.Combine(_userPath, "load", "textures");
+			if (Directory.Exists(activeLoadTextures))
+			{
+				foreach (var dir in Directory.GetDirectories(activeLoadTextures))
+				{
+					Directory.CreateDirectory(Path.Combine(persistentLoadTextures, Path.GetFileName(dir)));
+				}
+			}
+		}
+
+		private static string TryGetTitleIdHexFromRom(string romPath)
+		{
+			if (string.IsNullOrEmpty(romPath) || !File.Exists(romPath))
+			{
+				return null;
+			}
+
+			using var fs = new FileStream(romPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			using var br = new BinaryReader(fs);
+
+			if (fs.Length < 0x120)
+			{
+				return null;
+			}
+
+			var magic = ReadMagicAt(br, 0x100);
+			return magic switch
+			{
+				"NCCH" => ReadNcchTitleIdHex(br, 0),
+				"NCSD" => ReadNcsdPrimaryNcchTitleIdHex(br),
+				_ => null
+			};
+		}
+
+		private static string ReadNcsdPrimaryNcchTitleIdHex(BinaryReader br)
+		{
+			br.BaseStream.Position = 0x120;
+			var firstPartitionOffsetMediaUnits = br.ReadUInt32();
+			if (firstPartitionOffsetMediaUnits == 0)
+			{
+				return null;
+			}
+
+			var firstPartitionOffsetBytes = (long) firstPartitionOffsetMediaUnits * 0x200;
+			if (ReadMagicAt(br, firstPartitionOffsetBytes + 0x100) != "NCCH")
+			{
+				return null;
+			}
+
+			return ReadNcchTitleIdHex(br, firstPartitionOffsetBytes);
+		}
+
+		private static string ReadNcchTitleIdHex(BinaryReader br, long baseOffset)
+		{
+			br.BaseStream.Position = baseOffset + 0x108;
+			var titleId = br.ReadUInt64();
+			if (titleId == 0)
+			{
+				return null;
+			}
+
+			return titleId.ToString("x16");
+		}
+
+		private static string ReadMagicAt(BinaryReader br, long offset)
+		{
+			if (offset < 0 || offset + 4 > br.BaseStream.Length)
+			{
+				return string.Empty;
+			}
+
+			br.BaseStream.Position = offset;
+			return Encoding.ASCII.GetString(br.ReadBytes(4));
+		}
 
 		private IntPtr RequestGLContextCallback()
 		{

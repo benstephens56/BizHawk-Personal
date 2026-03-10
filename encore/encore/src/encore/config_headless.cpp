@@ -6,6 +6,7 @@
 #include <locale>
 
 #include "common/file_util.h"
+#include "common/logging/log.h"
 #include "common/settings.h"
 #include "core/hle/service/cfg/cfg.h"
 #include "core/hle/service/ptm/ptm.h"
@@ -178,6 +179,17 @@ void Config_Headless::LoadSyncSettings() {
     FileUtil::ResetUserPath();
     FileUtil::SetUserPath(user_directory_path_buffer);
 
+    // Always materialize base load/dump roots after user path is set.
+    // This helps verify pathing and avoids delayed creation failures.
+    const auto dump_root = FileUtil::GetUserPath(FileUtil::UserPath::DumpDir);
+    const auto load_root = FileUtil::GetUserPath(FileUtil::UserPath::LoadDir);
+    if (!FileUtil::CreateFullPath(dump_root)) {
+        LOG_ERROR(Common_Filesystem, "Unable to create {}", dump_root);
+    }
+    if (!FileUtil::CreateFullPath(load_root)) {
+        LOG_ERROR(Common_Filesystem, "Unable to create {}", load_root);
+    }
+
     // System
     ReadSetting(Settings::values.is_new_3ds);
     ReadSetting(Settings::values.lle_applets);
@@ -215,6 +227,30 @@ void Config_Headless::LoadSyncSettings() {
 }
 
 void Config_Headless::LoadNonSyncSettings() {
+    // Utility
+    // Read these via integer callback, but fall back to boolean callback for compatibility with
+    // frontends that don't provide the integer values as expected.
+    const bool dump_textures = callbacks.GetInteger("dump_textures") != 0 ||
+                               callbacks.GetBoolean("dump_textures");
+    const bool custom_textures = callbacks.GetInteger("custom_textures") != 0 ||
+                                 callbacks.GetBoolean("custom_textures");
+    const bool preload_textures = callbacks.GetInteger("preload_textures") != 0 ||
+                                  callbacks.GetBoolean("preload_textures");
+    const bool async_custom_loading = callbacks.GetInteger("async_custom_loading") != 0 ||
+                                      callbacks.GetBoolean("async_custom_loading");
+
+    Settings::values.dump_textures = dump_textures;
+    Settings::values.custom_textures = custom_textures;
+    Settings::values.preload_textures = preload_textures;
+    Settings::values.async_custom_loading = async_custom_loading;
+
+    if (Settings::values.dump_textures.GetValue()) {
+        FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::DumpDir));
+    }
+    if (Settings::values.custom_textures.GetValue()) {
+        FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::LoadDir));
+    }
+
     // Renderer
     ReadSetting(Settings::values.resolution_factor);
     ReadSetting(Settings::values.texture_filter);
