@@ -228,11 +228,21 @@ void Config_Headless::LoadSyncSettings() {
 
 void Config_Headless::LoadNonSyncSettings() {
     // Utility
-    // Read these explicitly via integer callback as well, avoiding bool ABI ambiguity.
-    Settings::values.dump_textures = callbacks.GetInteger("dump_textures") != 0;
-    Settings::values.custom_textures = callbacks.GetInteger("custom_textures") != 0;
-    Settings::values.preload_textures = callbacks.GetInteger("preload_textures") != 0;
-    Settings::values.async_custom_loading = callbacks.GetInteger("async_custom_loading") != 0;
+    // Read these via integer callback, but fall back to boolean callback for compatibility with
+    // frontends that don't provide the integer values as expected.
+    const bool dump_textures = callbacks.GetInteger("dump_textures") != 0 ||
+                               callbacks.GetBoolean("dump_textures");
+    const bool custom_textures = callbacks.GetInteger("custom_textures") != 0 ||
+                                 callbacks.GetBoolean("custom_textures");
+    const bool preload_textures = callbacks.GetInteger("preload_textures") != 0 ||
+                                  callbacks.GetBoolean("preload_textures");
+    const bool async_custom_loading = callbacks.GetInteger("async_custom_loading") != 0 ||
+                                      callbacks.GetBoolean("async_custom_loading");
+
+    Settings::values.dump_textures = dump_textures;
+    Settings::values.custom_textures = custom_textures;
+    Settings::values.preload_textures = preload_textures;
+    Settings::values.async_custom_loading = async_custom_loading;
 
     if (Settings::values.dump_textures.GetValue()) {
         FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::DumpDir));

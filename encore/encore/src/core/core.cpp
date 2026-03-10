@@ -345,6 +345,10 @@ System::ResultStatus System::Load(Frontend::EmuWindow& emu_window, const std::st
 
     perf_stats = std::make_unique<PerfStats>(title_id);
 
+    LOG_INFO(Core, "Texture settings: dump_textures={}, custom_textures={}, preload_textures={}, title_id={:016X}",
+             Settings::values.dump_textures.GetValue(), Settings::values.custom_textures.GetValue(),
+             Settings::values.preload_textures.GetValue(), title_id);
+
     if (Settings::values.dump_textures.GetValue()) {
         custom_tex_manager->PrepareDumping(title_id);
     }
